@@ -1,27 +1,21 @@
 """
 MONTE CARLO SIMULATION FOR EMISSION PREDICTION
-Professional Web Application
+Text-Based Version - No matplotlib required
+Works on any Streamlit Cloud environment
 
 Team:
 - Ismail Kamal
 - Amir Salem  
 - Samar Zaitoun
 
-Supervisor:
-Dr. Mohamed Youssef
+Supervisor: Dr. Mohamed Youssef
 Master Program - Alexandria University
-
-Version: 2.0
 """
 
 import streamlit as st
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 from datetime import datetime
-import base64
-from io import BytesIO
 
 # ================================================================
 # PAGE CONFIGURATION
@@ -30,63 +24,23 @@ from io import BytesIO
 st.set_page_config(
     page_title="Monte Carlo Simulation - Emission Predictor",
     page_icon="🎲",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
 # ================================================================
-# CUSTOM CSS FOR PROFESSIONAL DESIGN
+# CUSTOM CSS
 # ================================================================
 
 st.markdown("""
 <style>
-    /* Main container styling */
-    .main {
-        background-color: #f0f2f6;
-    }
-    
-    /* Header styling */
     .main-header {
         background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        padding: 2rem;
+        padding: 1.5rem;
         border-radius: 15px;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
         color: white;
         text-align: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
-    
-    .main-header h1 {
-        margin: 0;
-        font-size: 2.5rem;
-        font-weight: bold;
-    }
-    
-    .main-header p {
-        margin: 0.5rem 0 0 0;
-        opacity: 0.9;
-    }
-    
-    /* Card styling */
-    .card {
-        background: white;
-        border-radius: 15px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        border: 1px solid #e0e0e0;
-    }
-    
-    .card-title {
-        font-size: 1.3rem;
-        font-weight: bold;
-        color: #1e3c72;
-        margin-bottom: 1rem;
-        border-left: 4px solid #2a5298;
-        padding-left: 1rem;
-    }
-    
-    /* Metric card styling */
     .metric-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 10px;
@@ -94,90 +48,23 @@ st.markdown("""
         color: white;
         text-align: center;
     }
-    
-    .metric-value {
-        font-size: 2rem;
-        font-weight: bold;
-    }
-    
-    .metric-label {
-        font-size: 0.8rem;
-        opacity: 0.9;
-    }
-    
-    /* Button styling */
-    .stButton > button {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        color: white;
-        border: none;
-        padding: 0.5rem 2rem;
-        border-radius: 25px;
-        font-weight: bold;
-        transition: all 0.3s ease;
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-    
-    /* Success/Info/Warning boxes */
     .success-box {
         background: #d4edda;
         border-left: 4px solid #28a745;
         padding: 1rem;
         border-radius: 10px;
-        margin: 1rem 0;
     }
-    
-    .info-box {
-        background: #d1ecf1;
-        border-left: 4px solid #17a2b8;
-        padding: 1rem;
-        border-radius: 10px;
-        margin: 1rem 0;
-    }
-    
     .warning-box {
         background: #fff3cd;
         border-left: 4px solid #ffc107;
         padding: 1rem;
         border-radius: 10px;
-        margin: 1rem 0;
     }
-    
-    /* Footer styling */
-    .footer {
-        text-align: center;
-        padding: 2rem;
-        margin-top: 2rem;
-        border-top: 1px solid #e0e0e0;
-        color: #666;
-    }
-    
-    /* Sidebar styling */
-    .sidebar .sidebar-content {
-        background: #f8f9fa;
-    }
-    
-    /* Login form styling */
-    .login-container {
-        max-width: 400px;
-        margin: 100px auto;
-        padding: 2rem;
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-    }
-    
-    .login-title {
-        text-align: center;
-        margin-bottom: 2rem;
-        color: #1e3c72;
-    }
-    
-    hr {
-        margin: 1.5rem 0;
+    .danger-box {
+        background: #f8d7da;
+        border-left: 4px solid #dc3545;
+        padding: 1rem;
+        border-radius: 10px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -200,8 +87,9 @@ def show_login_form():
     """Display login form"""
     
     st.markdown("""
-    <div class="login-container">
-        <div class="login-title">
+    <div style="max-width: 400px; margin: 100px auto; padding: 2rem; 
+                background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.1);">
+        <div style="text-align: center;">
             <h2>🎲 Monte Carlo Simulation</h2>
             <p>Environmental Emission Predictor</p>
             <hr>
@@ -220,7 +108,7 @@ def show_login_form():
                 st.session_state.logged_in = True
                 st.rerun()
             else:
-                st.error("❌ Invalid username or password. Please try again.")
+                st.error("❌ Invalid username or password.")
                 st.info("Hint: Username: admin, Password: 1234")
     
     st.markdown("</div>", unsafe_allow_html=True)
@@ -231,49 +119,20 @@ def logout():
     st.rerun()
 
 # ================================================================
-# IMAGE HANDLING (Base64 encoded image)
-# ================================================================
-
-def get_base64_image():
-    """Return base64 encoded image for background or logo"""
-    # This is a placeholder - you can replace with your actual image
-    # For a chemical plant / refinery image
-    return """
-    <svg width="200" height="100" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
-        <rect width="200" height="100" fill="#1e3c72"/>
-        <rect x="20" y="40" width="30" height="50" fill="#ffd700"/>
-        <rect x="60" y="30" width="30" height="60" fill="#ffd700"/>
-        <rect x="100" y="20" width="30" height="70" fill="#ffd700"/>
-        <rect x="140" y="35" width="30" height="55" fill="#ffd700"/>
-        <circle cx="35" cy="35" r="8" fill="#ff4444"/>
-        <circle cx="75" cy="25" r="8" fill="#ff4444"/>
-        <circle cx="115" cy="15" r="8" fill="#ff4444"/>
-        <circle cx="155" cy="30" r="8" fill="#ff4444"/>
-        <text x="60" y="85" fill="white" font-size="12">Petrochemical Facility</text>
-    </svg>
-    """
-
-# ================================================================
 # SAMPLE PARSING FUNCTION
 # ================================================================
 
 def parse_samples(batch_text):
-    """
-    Parse batch text input into list of samples
-    Supports: comma-separated, space-separated, newline-separated
-    """
+    """Parse batch text input into list of samples"""
     if not batch_text:
         return []
     
     # Try different separators
     if ',' in batch_text:
-        # Comma separated
         parts = batch_text.replace('\n', ',').split(',')
     elif ' ' in batch_text:
-        # Space separated
         parts = batch_text.replace('\n', ' ').split()
     else:
-        # Newline separated
         parts = batch_text.strip().split('\n')
     
     samples = []
@@ -287,16 +146,8 @@ def parse_samples(batch_text):
     
     return samples
 
-def distribute_samples_to_fields(samples):
-    """Distribute samples to individual input fields"""
-    if 'sample_fields' not in st.session_state:
-        st.session_state.sample_fields = []
-    
-    st.session_state.sample_fields = samples
-    return st.session_state.sample_fields
-
 # ================================================================
-# MONTE CARLO SIMULATION FUNCTION
+# MONTE CARLO SIMULATION
 # ================================================================
 
 def run_monte_carlo(samples, uncertainty_percent, regulatory_limit, iterations_per_sample):
@@ -306,18 +157,11 @@ def run_monte_carlo(samples, uncertainty_percent, regulatory_limit, iterations_p
     total_iterations = n_samples * iterations_per_sample
     
     all_simulations = []
-    sample_contributions = []
     
     for measured in samples:
         sigma = measured * (uncertainty_percent / 100)
         simulated = np.random.normal(loc=measured, scale=sigma, size=iterations_per_sample)
         all_simulations.extend(simulated)
-        sample_contributions.append({
-            'measured': measured,
-            'simulated': simulated,
-            'mean': np.mean(simulated),
-            'std': np.std(simulated)
-        })
     
     all_simulations = np.array(all_simulations)
     
@@ -339,9 +183,7 @@ def run_monte_carlo(samples, uncertainty_percent, regulatory_limit, iterations_p
         'sample_max': max(samples),
         'n_samples': n_samples,
         'total_iterations': total_iterations,
-        'all_simulations': all_simulations,
         'samples': samples,
-        'sample_contributions': sample_contributions,
         'uncertainty_percent': uncertainty_percent,
         'regulatory_limit': regulatory_limit
     }
@@ -349,172 +191,101 @@ def run_monte_carlo(samples, uncertainty_percent, regulatory_limit, iterations_p
     return results
 
 # ================================================================
-# VISUALIZATION FUNCTIONS
+# TEXT VISUALIZATION FUNCTIONS
 # ================================================================
 
-def create_histogram(results):
-    """Create histogram of simulated values"""
+def display_text_histogram(results, width=50):
+    """Display text-based histogram"""
     
-    fig, ax = plt.subplots(figsize=(12, 6))
+    st.markdown("### 📊 Distribution of Simulated Values")
     
-    # Create histogram
-    n, bins, patches = ax.hist(results['all_simulations'], bins=50, 
-                                alpha=0.7, color='steelblue', 
-                                edgecolor='black', density=True)
+    min_val = results['min']
+    max_val = results['max']
+    bins = np.linspace(min_val, max_val, 15)
     
-    # Color bars based on limit
-    for i, (left, right) in enumerate(zip(bins[:-1], bins[1:])):
-        if left >= results['regulatory_limit']:
-            patches[i].set_facecolor('#dc3545')
-            patches[i].set_alpha(0.7)
-        elif right <= results['regulatory_limit']:
-            patches[i].set_facecolor('#28a745')
-            patches[i].set_alpha(0.5)
+    hist, bin_edges = np.histogram(results['all_simulations'], bins=bins)
+    max_freq = max(hist)
+    scale = width / max_freq if max_freq > 0 else 1
+    
+    histogram_data = []
+    for i in range(len(hist)):
+        bar_length = int(hist[i] * scale)
+        bar = '█' * bar_length
+        
+        if bin_edges[i] >= results['regulatory_limit']:
+            prefix = '🔴'
+        elif bin_edges[i+1] <= results['regulatory_limit']:
+            prefix = '🟢'
         else:
-            patches[i].set_facecolor('#ffc107')
-            patches[i].set_alpha(0.7)
+            prefix = '🟡'
+        
+        histogram_data.append({
+            'Range': f"{bin_edges[i]:.1f} - {bin_edges[i+1]:.1f}",
+            'Distribution': bar,
+            'Status': prefix
+        })
     
-    # Add vertical lines
-    ax.axvline(x=results['regulatory_limit'], color='#dc3545', 
-               linestyle='--', linewidth=2.5, 
-               label=f'Regulatory Limit = {results["regulatory_limit"]}')
-    
-    ax.axvline(x=results['mean'], color='#1e3c72', 
-               linestyle='-', linewidth=2.5, 
-               label=f'Mean = {results["mean"]:.1f}')
-    
-    ax.axvline(x=results['median'], color='#17a2b8', 
-               linestyle=':', linewidth=2, 
-               label=f'Median = {results["median"]:.1f}')
-    
-    # Add confidence interval shading
-    ax.axvspan(results['percentile_2.5'], results['percentile_97.5'], 
-               alpha=0.15, color='gray', label='95% Confidence Interval')
-    
-    ax.set_xlabel('Emission Value (ppm)', fontsize=12, fontweight='bold')
-    ax.set_ylabel('Probability Density', fontsize=12, fontweight='bold')
-    ax.set_title('Monte Carlo Simulation Results\nDistribution of Possible True Values', 
-                 fontsize=14, fontweight='bold', pad=20)
-    ax.legend(loc='upper right', frameon=True, fancybox=True)
-    ax.grid(True, alpha=0.3)
-    ax.set_facecolor('#f8f9fa')
-    
-    plt.tight_layout()
-    return fig
+    df_hist = pd.DataFrame(histogram_data)
+    st.code('\n'.join([f"{row['Status']} {row['Range']:>15} | {row['Distribution']}" for _, row in df_hist.iterrows()]))
+    st.caption("🟢 = Below limit | 🟡 = Crosses limit | 🔴 = Above limit")
 
-def create_cdf_plot(results):
-    """Create cumulative distribution function plot"""
+def display_text_cdf(results):
+    """Display text-based CDF table"""
     
-    fig, ax = plt.subplots(figsize=(12, 6))
+    st.markdown("### 📈 Cumulative Distribution")
     
-    sorted_data = np.sort(results['all_simulations'])
-    cdf = np.arange(1, len(sorted_data) + 1) / len(sorted_data)
+    percentiles = [1, 5, 10, 25, 50, 75, 90, 95, 99]
+    cdf_data = []
     
-    ax.plot(sorted_data, cdf, 'b-', linewidth=2.5, label='Cumulative Distribution')
+    for p in percentiles:
+        value = np.percentile(results['all_simulations'], p)
+        cdf_data.append({
+            'Percentile': f"{p}%",
+            'Value (ppm)': f"{value:.2f}"
+        })
     
-    ax.axvline(x=results['regulatory_limit'], color='#dc3545', 
-               linestyle='--', linewidth=2.5, 
-               label=f'Limit = {results["regulatory_limit"]}')
+    df_cdf = pd.DataFrame(cdf_data)
+    st.dataframe(df_cdf, hide_index=True, use_container_width=True)
     
-    ax.axhline(y=results['p_comply'], color='#28a745', 
-               linestyle=':', linewidth=1.5, alpha=0.7)
-    ax.axhline(y=results['p_exceed'], color='#dc3545', 
-               linestyle=':', linewidth=1.5, alpha=0.7)
-    
-    # Add annotations
-    ax.annotate(f'P(Exceed) = {results["p_exceed"]*100:.1f}%', 
-                xy=(results['regulatory_limit'] + 2, results['p_exceed']),
-                fontsize=10, color='#dc3545', fontweight='bold')
-    
-    ax.annotate(f'P(Comply) = {results["p_comply"]*100:.1f}%', 
-                xy=(results['regulatory_limit'] - 10, results['p_comply']),
-                fontsize=10, color='#28a745', fontweight='bold')
-    
-    ax.set_xlabel('Emission Value (ppm)', fontsize=12, fontweight='bold')
-    ax.set_ylabel('Cumulative Probability', fontsize=12, fontweight='bold')
-    ax.set_title('Cumulative Distribution Function (CDF)', 
-                 fontsize=14, fontweight='bold', pad=20)
-    ax.legend(loc='lower right', frameon=True, fancybox=True)
-    ax.grid(True, alpha=0.3)
-    ax.set_facecolor('#f8f9fa')
-    
-    plt.tight_layout()
-    return fig
+    st.info(f"**At Regulatory Limit ({results['regulatory_limit']} ppm):**\n\n" + 
+            f"Probability of Compliance: {results['p_comply']*100:.1f}%\n" +
+            f"Probability of Exceedance: {results['p_exceed']*100:.1f}%")
 
-def create_sample_comparison_plot(results):
-    """Compare original samples with simulated distribution"""
+def display_sample_table(results, uncertainty_percent):
+    """Display sample values table"""
     
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+    sample_data = []
+    for i, sample in enumerate(results['samples']):
+        uncertainty = sample * uncertainty_percent / 100
+        sample_data.append({
+            'Sample #': i + 1,
+            'Measured Value (ppm)': f"{sample:.2f}",
+            'Uncertainty (± ppm)': f"{uncertainty:.2f}",
+            '95% CI Lower': f"{sample - 1.96 * uncertainty:.2f}",
+            '95% CI Upper': f"{sample + 1.96 * uncertainty:.2f}"
+        })
     
-    # Original samples histogram
-    ax1.hist(results['samples'], bins=15, color='#1e3c72', 
-             edgecolor='black', alpha=0.7)
-    ax1.axvline(x=results['sample_mean'], color='#dc3545', 
-                linestyle='--', linewidth=2, 
-                label=f'Mean = {results["sample_mean"]:.1f}')
-    ax1.set_xlabel('Measured Value (ppm)', fontsize=11)
-    ax1.set_ylabel('Frequency', fontsize=11)
-    ax1.set_title(f'Original Samples (n = {results["n_samples"]})', 
-                  fontsize=12, fontweight='bold')
-    ax1.legend()
-    ax1.grid(True, alpha=0.3)
-    ax1.set_facecolor('#f8f9fa')
-    
-    # Simulated distribution
-    ax2.hist(results['all_simulations'], bins=50, color='#28a745', 
-             edgecolor='black', alpha=0.5, density=True)
-    ax2.axvline(x=results['mean'], color='#1e3c72', 
-                linestyle='-', linewidth=2, 
-                label=f'Mean = {results["mean"]:.1f}')
-    ax2.axvspan(results['percentile_2.5'], results['percentile_97.5'], 
-                alpha=0.2, color='gray', label='95% CI')
-    ax2.set_xlabel('Possible True Value (ppm)', fontsize=11)
-    ax2.set_ylabel('Probability Density', fontsize=11)
-    ax2.set_title(f'Monte Carlo Simulation ({results["total_iterations"]:,} iterations)', 
-                  fontsize=12, fontweight='bold')
-    ax2.legend()
-    ax2.grid(True, alpha=0.3)
-    ax2.set_facecolor('#f8f9fa')
-    
-    plt.suptitle('Original Samples vs. Simulated Distribution', 
-                 fontsize=14, fontweight='bold', y=1.02)
-    plt.tight_layout()
-    
-    return fig
+    df_samples = pd.DataFrame(sample_data)
+    st.dataframe(df_samples, hide_index=True, use_container_width=True)
 
-def create_uncertainty_contribution_plot(results):
-    """Show uncertainty contribution per sample"""
+def display_statistics_table(results):
+    """Display statistics in table format"""
     
-    fig, ax = plt.subplots(figsize=(12, 6))
+    stats_data = [
+        {'Metric': 'Sample Mean', 'Value': f"{results['sample_mean']:.2f} ppm"},
+        {'Metric': 'Sample Std Dev', 'Value': f"{results['sample_std']:.2f} ppm"},
+        {'Metric': 'Sample Range', 'Value': f"[{results['sample_min']:.2f}, {results['sample_max']:.2f}] ppm"},
+        {'Metric': 'Number of Samples', 'Value': str(results['n_samples'])},
+        {'Metric': 'Simulation Mean', 'Value': f"{results['mean']:.2f} ppm"},
+        {'Metric': 'Simulation Median', 'Value': f"{results['median']:.2f} ppm"},
+        {'Metric': 'Simulation Std Dev', 'Value': f"{results['std']:.2f} ppm"},
+        {'Metric': 'Total Iterations', 'Value': f"{results['total_iterations']:,}"},
+        {'Metric': '90% CI', 'Value': f"[{results['percentile_5']:.2f}, {results['percentile_95']:.2f}] ppm"},
+        {'Metric': '95% CI', 'Value': f"[{results['percentile_2.5']:.2f}, {results['percentile_97.5']:.2f}] ppm"},
+    ]
     
-    samples = results['samples']
-    uncertainties = [s * results['uncertainty_percent'] / 100 for s in samples]
-    
-    x_pos = np.arange(len(samples))
-    
-    bars = ax.bar(x_pos, uncertainties, color='#17a2b8', alpha=0.7, edgecolor='black')
-    
-    # Color code bars based on value
-    for i, (bar, sample) in enumerate(zip(bars, samples)):
-        if sample > results['regulatory_limit']:
-            bar.set_color('#dc3545')
-        elif sample < results['regulatory_limit'] * 0.8:
-            bar.set_color('#28a745')
-    
-    ax.axhline(y=results['regulatory_limit'] * results['uncertainty_percent'] / 100,
-               color='#dc3545', linestyle='--', linewidth=2, 
-               label='Uncertainty at Limit')
-    
-    ax.set_xlabel('Sample Number', fontsize=12, fontweight='bold')
-    ax.set_ylabel('Measurement Uncertainty (± ppm)', fontsize=12, fontweight='bold')
-    ax.set_title('Uncertainty Contribution per Sample', 
-                 fontsize=14, fontweight='bold', pad=20)
-    ax.legend()
-    ax.grid(True, alpha=0.3, axis='y')
-    ax.set_facecolor('#f8f9fa')
-    
-    plt.tight_layout()
-    return fig
+    df_stats = pd.DataFrame(stats_data)
+    st.dataframe(df_stats, hide_index=True, use_container_width=True)
 
 # ================================================================
 # MAIN APPLICATION
@@ -527,82 +298,62 @@ def main():
     if not check_login():
         return
     
-    # Header with image and title
-    st.markdown(f"""
+    # Header
+    st.markdown("""
     <div class="main-header">
         <h1>🎲 Monte Carlo Simulation</h1>
         <p>Environmental Emission Predictor for Petrochemical Facilities</p>
-        <p style="font-size: 0.9rem; margin-top: 1rem;">Under Supervision of Dr. Mohamed Youssef | Master Program - Alexandria University</p>
+        <p style="font-size: 0.9rem;">Under Supervision of Dr. Mohamed Youssef | Master Program - Alexandria University</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Team information
-    col1, col2, col3, col4 = st.columns(4)
+    # Team information and logout
+    col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 1])
     with col1:
-        st.markdown("""
-        <div style="text-align: center; padding: 0.5rem; background: #e8f4f8; border-radius: 10px;">
-            <strong>👨‍💻 Ismail Kamal</strong>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("**👨‍💻 Ismail Kamal**")
     with col2:
-        st.markdown("""
-        <div style="text-align: center; padding: 0.5rem; background: #e8f4f8; border-radius: 10px;">
-            <strong>👨‍💻 Amir Salem</strong>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("**👨‍💻 Amir Salem**")
     with col3:
-        st.markdown("""
-        <div style="text-align: center; padding: 0.5rem; background: #e8f4f8; border-radius: 10px;">
-            <strong>👩‍💻 Samar Zaitoun</strong>
-        </div>
-        """, unsafe_allow_html=True)
-    with col4:
+        st.markdown("**👩‍💻 Samar Zaitoun**")
+    with col5:
         if st.button("🚪 Logout", use_container_width=True):
             logout()
     
-    st.markdown("<hr>", unsafe_allow_html=True)
+    st.markdown("---")
     
-    # Sidebar for inputs
+    # Sidebar
     with st.sidebar:
-        st.markdown("""
-        <div style="text-align: center; margin-bottom: 1rem;">
-            <h3>⚙️ Simulation Parameters</h3>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("### ⚙️ Simulation Parameters")
         
-        # Batch sample input
-        st.markdown("### 📝 Batch Sample Input")
-        st.markdown("Paste all sample values (comma, space, or newline separated):")
-        
+        # Batch input
+        st.markdown("#### 📝 Batch Sample Input")
         batch_input = st.text_area(
-            "Sample Values",
-            placeholder="Example: 95, 102, 88, 110, 97, 105, 92, 108, 99, 101\nOr:\n95\n102\n88\n110\n97",
-            height=150
+            "Paste values (comma, space, or newline separated):",
+            placeholder="95, 102, 88, 110, 97, 105, 92, 108, 99, 101",
+            height=100
         )
         
-        if st.button("📋 Parse & Distribute Samples", use_container_width=True):
-            parsed_samples = parse_samples(batch_input)
-            if len(parsed_samples) >= 3:
-                st.session_state.samples = parsed_samples
-                st.success(f"✅ Parsed {len(parsed_samples)} samples successfully!")
+        if st.button("📋 Parse & Load", use_container_width=True):
+            parsed = parse_samples(batch_input)
+            if len(parsed) >= 3:
+                st.session_state.samples = parsed
+                st.success(f"✅ Loaded {len(parsed)} samples!")
                 st.rerun()
             else:
-                st.error(f"⚠️ Only {len(parsed_samples)} samples detected. Minimum 3 samples required.")
+                st.error(f"⚠️ Only {len(parsed)} samples. Need at least 3.")
         
         st.markdown("---")
         
-        # Individual sample inputs
-        st.markdown("### 🔢 Individual Sample Values")
+        # Individual samples
+        st.markdown("#### 🔢 Individual Samples")
         
         if 'samples' not in st.session_state:
             st.session_state.samples = [95, 102, 88, 110, 97, 105, 92, 108, 99, 101]
         
-        # Dynamic sample fields
-        n_samples = st.number_input("Number of samples", min_value=3, max_value=50, 
+        n_samples = st.number_input("Number of samples", min_value=3, max_value=50,
                                      value=len(st.session_state.samples), step=1)
         
         if n_samples != len(st.session_state.samples):
-            # Adjust sample list size
             current = st.session_state.samples
             if n_samples > len(current):
                 current.extend([100] * (n_samples - len(current)))
@@ -610,249 +361,172 @@ def main():
                 current = current[:n_samples]
             st.session_state.samples = current
         
-        # Display individual fields
+        # Display individual fields in columns
         sample_values = []
         cols = st.columns(3)
         for i in range(n_samples):
             col_idx = i % 3
             with cols[col_idx]:
-                val = st.number_input(f"Sample {i+1}", value=float(st.session_state.samples[i]), 
-                                       step=1.0, key=f"sample_{i}")
+                val = st.number_input(f"#{i+1}", value=float(st.session_state.samples[i]),
+                                      step=1.0, key=f"s_{i}", label_visibility="collapsed")
                 sample_values.append(val)
         
         st.session_state.samples = sample_values
         
         st.markdown("---")
         
-        # Simulation parameters
-        st.markdown("### 🎯 Simulation Settings")
-        
-        uncertainty_percent = st.slider("Measurement Uncertainty (%)", 1, 20, 5, 
-                                         help="Typical CEMS accuracy: ±5%")
-        
+        # Simulation settings
+        st.markdown("#### 🎯 Settings")
+        uncertainty_percent = st.slider("Uncertainty (%)", 1, 20, 5)
         regulatory_limit = st.number_input("Regulatory Limit (ppm)", value=100.0, step=5.0)
+        iterations = st.selectbox("Iterations/sample", [1000, 5000, 10000, 50000], index=2)
         
-        iterations_per_sample = st.selectbox("Iterations per sample", 
-                                               [1000, 5000, 10000, 50000], 
-                                               index=2)
-        
-        run_button = st.button("🚀 Run Monte Carlo Simulation", use_container_width=True, type="primary")
+        run_button = st.button("🚀 Run Simulation", use_container_width=True, type="primary")
     
-    # Main content area
+    # Main content
     if run_button:
         samples = st.session_state.samples
         
         if len(samples) < 3:
-            st.warning("⚠️ Please enter at least 3 samples before running simulation.")
+            st.warning("⚠️ Please enter at least 3 samples.")
         else:
-            with st.spinner("Running Monte Carlo simulation... This may take a few seconds."):
-                
-                # Run simulation
-                results = run_monte_carlo(samples, uncertainty_percent, 
-                                          regulatory_limit, iterations_per_sample)
-                
-                # Store results in session state
+            with st.spinner("Running Monte Carlo simulation..."):
+                results = run_monte_carlo(samples, uncertainty_percent, regulatory_limit, iterations)
                 st.session_state.results = results
                 
-                # Display summary metrics
-                st.markdown("## 📊 Simulation Results Summary")
+                # Metrics row
+                st.markdown("### 📊 Results Summary")
                 
                 col1, col2, col3, col4 = st.columns(4)
                 with col1:
                     st.markdown(f"""
                     <div class="metric-card">
-                        <div class="metric-value">{results['mean']:.1f}</div>
-                        <div class="metric-label">Mean Emission (ppm)</div>
+                        <div style="font-size: 1.8rem; font-weight: bold;">{results['mean']:.1f}</div>
+                        <div>Mean (ppm)</div>
                     </div>
                     """, unsafe_allow_html=True)
                 
                 with col2:
                     st.markdown(f"""
                     <div class="metric-card">
-                        <div class="metric-value">{results['median']:.1f}</div>
-                        <div class="metric-label">Median Emission (ppm)</div>
+                        <div style="font-size: 1.8rem; font-weight: bold;">{results['median']:.1f}</div>
+                        <div>Median (ppm)</div>
                     </div>
                     """, unsafe_allow_html=True)
                 
                 with col3:
                     st.markdown(f"""
                     <div class="metric-card">
-                        <div class="metric-value">±{results['std']:.1f}</div>
-                        <div class="metric-label">Standard Deviation</div>
+                        <div style="font-size: 1.8rem; font-weight: bold;">±{results['std']:.1f}</div>
+                        <div>Std Dev</div>
                     </div>
                     """, unsafe_allow_html=True)
                 
                 with col4:
-                    exceed_color = "#dc3545" if results['p_exceed'] > 0.5 else "#28a745"
+                    color = "#dc3545" if results['p_exceed'] > 0.5 else "#28a745"
                     st.markdown(f"""
-                    <div class="metric-card" style="background: linear-gradient(135deg, {exceed_color} 0%, #555 100%);">
-                        <div class="metric-value">{results['p_exceed']*100:.1f}%</div>
-                        <div class="metric-label">Probability > Limit</div>
+                    <div class="metric-card" style="background: linear-gradient(135deg, {color} 0%, #555 100%);">
+                        <div style="font-size: 1.8rem; font-weight: bold;">{results['p_exceed']*100:.1f}%</div>
+                        <div>P(Exceed)</div>
                     </div>
                     """, unsafe_allow_html=True)
                 
                 # Confidence intervals
                 st.markdown("---")
-                st.markdown("## 📈 Confidence Intervals")
+                st.markdown("### 📈 Confidence Intervals")
                 
                 col1, col2 = st.columns(2)
                 with col1:
-                    st.info(f"""
-                    ### 90% Confidence Interval
-                    **[{results['percentile_5']:.2f}, {results['percentile_95']:.2f}]** ppm
-                    
-                    We are 90% confident that the true emission value lies within this range.
-                    """)
-                
+                    st.info(f"**90% Confidence Interval:** [{results['percentile_5']:.2f}, {results['percentile_95']:.2f}] ppm")
                 with col2:
-                    st.success(f"""
-                    ### 95% Confidence Interval
-                    **[{results['percentile_2.5']:.2f}, {results['percentile_97.5']:.2f}]** ppm
-                    
-                    We are 95% confident that the true emission value lies within this range.
-                    """)
+                    st.success(f"**95% Confidence Interval:** [{results['percentile_2.5']:.2f}, {results['percentile_97.5']:.2f}] ppm")
                 
                 # Regulatory decision
                 st.markdown("---")
-                st.markdown("## ⚖️ Regulatory Decision")
+                st.markdown("### ⚖️ Regulatory Decision")
                 
                 if results['p_exceed'] < 0.05:
                     st.markdown("""
                     <div class="success-box">
                         <h3>✅ SAFE ZONE - Declare Compliant</h3>
-                        <p>The probability of exceeding the regulatory limit is less than 5%. 
-                        The facility is considered compliant with regulations.</p>
-                        <p><strong>Recommended Action:</strong> Continue routine monitoring.</p>
+                        <p>Probability of exceeding limit is less than 5%.</p>
                     </div>
                     """, unsafe_allow_html=True)
                 elif results['p_exceed'] > 0.95:
                     st.markdown("""
-                    <div class="warning-box" style="border-left-color: #dc3545;">
+                    <div class="danger-box">
                         <h3>❌ VIOLATION ZONE - Declare Non-Compliant</h3>
-                        <p>The probability of exceeding the regulatory limit is greater than 95%. 
-                        The facility is in violation of regulations.</p>
-                        <p><strong>Recommended Action:</strong> Immediate enforcement action required.</p>
+                        <p>Probability of exceeding limit is greater than 95%.</p>
                     </div>
                     """, unsafe_allow_html=True)
                 else:
                     st.markdown("""
                     <div class="warning-box">
                         <h3>⚠️ UNCERTAIN ZONE - Need More Data</h3>
-                        <p>The probability of exceeding the regulatory limit is between 5% and 95%. 
-                        The compliance status cannot be determined with confidence.</p>
-                        <p><strong>Recommended Action:</strong> Collect additional samples or install continuous monitoring.</p>
+                        <p>Probability of exceeding limit is between 5% and 95%.</p>
                     </div>
                     """, unsafe_allow_html=True)
                 
-                # Detailed statistics
+                # Statistics table
                 st.markdown("---")
-                st.markdown("## 📋 Detailed Statistics")
+                st.markdown("### 📋 Detailed Statistics")
+                display_statistics_table(results)
                 
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.markdown("### Original Samples")
-                    st.write(f"- **Number of samples:** {results['n_samples']}")
-                    st.write(f"- **Sample mean:** {results['sample_mean']:.2f} ppm")
-                    st.write(f"- **Sample std deviation:** {results['sample_std']:.2f} ppm")
-                    st.write(f"- **Sample range:** [{results['sample_min']:.2f}, {results['sample_max']:.2f}] ppm")
-                
-                with col2:
-                    st.markdown("### Monte Carlo Results")
-                    st.write(f"- **Total iterations:** {results['total_iterations']:,}")
-                    st.write(f"- **Simulation mean:** {results['mean']:.2f} ppm")
-                    st.write(f"- **Simulation median:** {results['median']:.2f} ppm")
-                    st.write(f"- **Simulation std:** {results['std']:.2f} ppm")
-                    st.write(f"- **Total range:** [{results['min']:.2f}, {results['max']:.2f}] ppm")
-                
-                # Visualizations
+                # Sample table
                 st.markdown("---")
-                st.markdown("## 📊 Visualizations")
+                st.markdown("### 📋 Sample Values")
+                display_sample_table(results, uncertainty_percent)
                 
-                tab1, tab2, tab3, tab4 = st.tabs(["📈 Histogram", "📉 CDF Plot", "📊 Sample Comparison", "🎯 Uncertainty Contribution"])
-                
-                with tab1:
-                    fig1 = create_histogram(results)
-                    st.pyplot(fig1)
-                    plt.close(fig1)
-                
-                with tab2:
-                    fig2 = create_cdf_plot(results)
-                    st.pyplot(fig2)
-                    plt.close(fig2)
-                
-                with tab3:
-                    fig3 = create_sample_comparison_plot(results)
-                    st.pyplot(fig3)
-                    plt.close(fig3)
-                
-                with tab4:
-                    fig4 = create_uncertainty_contribution_plot(results)
-                    st.pyplot(fig4)
-                    plt.close(fig4)
-                
-                # Sample values table
+                # Text histogram
                 st.markdown("---")
-                st.markdown("## 📋 Sample Values Summary")
+                display_text_histogram(results)
                 
-                sample_df = pd.DataFrame({
-                    'Sample #': range(1, len(results['samples']) + 1),
-                    'Measured Value (ppm)': results['samples'],
-                    'Uncertainty (± ppm)': [s * uncertainty_percent / 100 for s in results['samples']],
-                    '95% CI Lower': [s - 1.96 * s * uncertainty_percent / 100 for s in results['samples']],
-                    '95% CI Upper': [s + 1.96 * s * uncertainty_percent / 100 for s in results['samples']]
-                })
-                
-                st.dataframe(sample_df, use_container_width=True, hide_index=True)
-                
-                # Download results
+                # CDF table
                 st.markdown("---")
-                st.markdown("## 📥 Download Results")
+                display_text_cdf(results)
                 
-                # Prepare download data
+                # Download
+                st.markdown("---")
+                st.markdown("### 📥 Download Results")
+                
                 download_df = pd.DataFrame({
                     'simulated_values': results['all_simulations']
                 })
                 
                 csv = download_df.to_csv(index=False)
                 st.download_button(
-                    label="📥 Download Simulated Values (CSV)",
+                    label="📥 Download CSV",
                     data=csv,
                     file_name=f"monte_carlo_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                     mime="text/csv"
                 )
-                
+    
     else:
-        st.info("👈 **Welcome!** Please configure your simulation parameters in the sidebar and click 'Run Monte Carlo Simulation' to begin.")
+        st.info("👈 **Welcome!** Configure parameters and click 'Run Simulation'.")
         
-        # Show example
-        with st.expander("ℹ️ How to use this application"):
+        with st.expander("ℹ️ How to Use"):
             st.markdown("""
-            ### Step-by-Step Guide:
+            1. **Paste samples** in batch input or enter individually
+            2. Click **"Parse & Load"** to auto-fill fields
+            3. Set **uncertainty percentage** (CEMS: ±5%)
+            4. Set **regulatory limit**
+            5. Click **"Run Simulation"**
             
-            1. **Enter Samples**: Either paste all samples in batch input or enter them individually
-            2. **Click "Parse & Distribute"** to automatically fill individual fields
-            3. **Set Uncertainty**: Adjust measurement uncertainty (typical CEMS: ±5%)
-            4. **Set Regulatory Limit**: Enter the compliance threshold
-            5. **Run Simulation**: Click the button to start Monte Carlo simulation
-            6. **Review Results**: Analyze statistics, visualizations, and regulatory decision
-            
-            ### Sample Data Format:
-            - Comma separated: `95, 102, 88, 110, 97`
-            - Space separated: `95 102 88 110 97`
-            - Newline separated: each value on a new line
+            **Sample formats:** `95, 102, 88` or `95 102 88` or each on new line
             """)
     
     # Footer
+    st.markdown("---")
     st.markdown("""
-    <div class="footer">
-        <p>© 2024 Monte Carlo Simulation Tool | Developed by Ismail Kamal, Amir Salem, Samar Zaitoun</p>
-        <p>Under Supervision of Dr. Mohamed Youssef | Master Program - Alexandria University</p>
-        <p style="font-size: 0.8rem;">References: ISO 14064-1:2018 | Cullen, A.C., & Frey, H.C. (1999)</p>
+    <div style="text-align: center; color: #666; padding: 1rem;">
+        <p>© 2024 | Ismail Kamal, Amir Salem, Samar Zaitoun</p>
+        <p>Supervisor: Dr. Mohamed Youssef | Alexandria University</p>
+        <p style="font-size: 0.8rem;">References: ISO 14064-1:2018 | Cullen & Frey (1999)</p>
     </div>
     """, unsafe_allow_html=True)
 
 # ================================================================
-# RUN APPLICATION
+# RUN
 # ================================================================
 
 if __name__ == "__main__":
