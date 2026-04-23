@@ -1,159 +1,317 @@
-# streamlit_app.py
-import streamlit as st
+"""
+QUICK RUN SCRIPT - Text Only Version (No matplotlib required)
+Works on any environment including Streamlit Cloud with limited graphics
+"""
+
 import numpy as np
-import pandas as pd
+import sys
 
-st.set_page_config(page_title="Monte Carlo Simulation", layout="wide")
+# ================================================================
+# INPUT YOUR DATA HERE
+# ================================================================
 
-st.title("🎲 Monte Carlo Simulation for Emission Prediction")
-st.markdown("---")
+# Enter your measured samples (at least 10)
+samples = [95, 102, 88, 110, 97, 105, 92, 108, 99, 101]
 
-# Sidebar for inputs
-st.sidebar.header("📊 Input Parameters")
+# Measurement uncertainty (%)
+uncertainty_percent = 5
 
-# Sample input method
-input_method = st.sidebar.radio(
-    "How would you like to enter samples?",
-    ["Manual Entry", "Upload CSV", "Use Example Data"]
-)
+# Regulatory limit
+regulatory_limit = 100
 
-samples = []
+# Number of iterations per sample
+iterations_per_sample = 10000
 
-if input_method == "Manual Entry":
-    n_samples = st.sidebar.number_input("Number of samples", min_value=5, max_value=100, value=10)
-    st.sidebar.write("Enter measured values:")
-    for i in range(int(n_samples)):
-        val = st.sidebar.number_input(f"Sample {i+1}", value=95.0 + i, step=1.0)
-        samples.append(val)
+# ================================================================
+# RUN SIMULATION
+# ================================================================
 
-elif input_method == "Upload CSV":
-    uploaded_file = st.sidebar.file_uploader("Upload CSV file", type=['csv'])
-    if uploaded_file is not None:
-        df = pd.read_csv(uploaded_file)
-        if 'measured_value' in df.columns:
-            samples = df['measured_value'].tolist()
-        else:
-            samples = df.iloc[:, 0].tolist()
-        st.sidebar.success(f"Loaded {len(samples)} samples")
+def run_monte_carlo(samples, uncertainty_percent, regulatory_limit, iterations_per_sample):
+    """Run Monte Carlo simulation and return results"""
+    
+    n_samples = len(samples)
+    total_iterations = n_samples * iterations_per_sample
+    
+    print(f"\n{'='*60}")
+    print("MONTE CARLO SIMULATION - EMISSION PREDICTION")
+    print(f"{'='*60}")
+    print(f"Number of samples: {n_samples}")
+    print(f"Iterations per sample: {iterations_per_sample:,}")
+    print(f"Total iterations: {total_iterations:,}")
+    print(f"Measurement uncertainty: ±{uncertainty_percent}%")
+    print(f"Regulatory limit: {regulatory_limit}")
+    print(f"{'='*60}")
+    
+    print("\nRunning simulation...")
+    
+    # Run simulation
+    all_simulations = []
+    for i, measured in enumerate(samples):
+        sigma = measured * (uncertainty_percent / 100)
+        simulated = np.random.normal(loc=measured, scale=sigma, size=iterations_per_sample)
+        all_simulations.extend(simulated)
+        
+        # Progress indicator
+        if (i + 1) % 5 == 0 or i == n_samples - 1:
+            print(f"  Processed {i+1}/{n_samples} samples...")
+    
+    all_simulations = np.array(all_simulations)
+    
+    # Calculate results
+    results = {
+        'mean': np.mean(all_simulations),
+        'median': np.median(all_simulations),
+        'std': np.std(all_simulations),
+        'min': np.min(all_simulations),
+        'max': np.max(all_simulations),
+        'percentile_2.5': np.percentile(all_simulations, 2.5),
+        'percentile_5': np.percentile(all_simulations, 5),
+        'percentile_95': np.percentile(all_simulations, 95),
+        'percentile_97.5': np.percentile(all_simulations, 97.5),
+        'p_exceed': np.mean(all_simulations > regulatory_limit),
+        'p_comply': np.mean(all_simulations <= regulatory_limit),
+        'sample_mean': np.mean(samples),
+        'sample_std': np.std(samples),
+        'sample_min': min(samples),
+        'sample_max': max(samples),
+        'n_samples': n_samples,
+        'total_iterations': total_iterations,
+        'all_simulations': all_simulations
+    }
+    
+    return results
+
+
+def print_results(results, regulatory_limit):
+    """Print formatted results"""
+    
+    print(f"\n{'='*60}")
+    print("RESULTS")
+    print(f"{'='*60}")
+    
+    print("\n📊 ORIGINAL SAMPLES STATISTICS:")
+    print("-" * 40)
+    print(f"   Number of samples:     {results['n_samples']}")
+    print(f"   Sample mean:           {results['sample_mean']:.2f}")
+    print(f"   Sample std deviation:  {results['sample_std']:.2f}")
+    print(f"   Sample range:          [{results['sample_min']:.2f}, {results['sample_max']:.2f}]")
+    print(f"   Samples:               {samples}")
+    
+    print("\n🎲 MONTE CARLO RESULTS:")
+    print("-" * 40)
+    print(f"   Mean of simulation:    {results['mean']:.2f}")
+    print(f"   Median:                {results['median']:.2f}")
+    print(f"   Standard deviation:    {results['std']:.2f}")
+    print(f"   Total range:           [{results['min']:.2f}, {results['max']:.2f}]")
+    
+    print("\n📈 CONFIDENCE INTERVALS:")
+    print("-" * 40)
+    print(f"   90% CI:                [{results['percentile_5']:.2f}, {results['percentile_95']:.2f}]")
+    print(f"   95% CI:                [{results['percentile_2.5']:.2f}, {results['percentile_97.5']:.2f}]")
+    
+    print("\n⚠️ REGULATORY ANALYSIS:")
+    print("-" * 40)
+    print(f"   Regulatory limit:      {regulatory_limit:.2f}")
+    print(f"   Probability exceedance: {results['p_exceed']*100:.1f}%")
+    print(f"   Probability compliance: {results['p_comply']*100:.1f}%")
+    
+    print("\n✅ REGULATORY DECISION:")
+    print("-" * 40)
+    if results['p_exceed'] < 0.05:
+        print(f"   Decision:              SAFE ZONE - Declare Compliant")
+        print(f"   Action:                No enforcement action needed")
+    elif results['p_exceed'] > 0.95:
+        print(f"   Decision:              VIOLATION ZONE - Declare Non-Compliant")
+        print(f"   Action:                Enforcement action recommended")
     else:
-        samples = [95, 102, 88, 110, 97, 105, 92, 108, 99, 101]
+        print(f"   Decision:              UNCERTAIN ZONE - Need More Data")
+        print(f"   Action:                Collect additional samples or install CEMS")
+    
+    print(f"\n{'='*60}")
 
-else:
-    # Example data
-    samples = [95, 102, 88, 110, 97, 105, 92, 108, 99, 101]
-    st.sidebar.info("Using example data (10 samples from a refinery)")
 
-# Parameters
-uncertainty_percent = st.sidebar.slider("Measurement Uncertainty (%)", 1, 20, 5)
-regulatory_limit = st.sidebar.number_input("Regulatory Limit", value=100.0)
-iterations_per_sample = st.sidebar.selectbox("Iterations per sample", [1000, 5000, 10000, 50000], index=2)
-
-# Run button
-run_button = st.sidebar.button("🚀 Run Monte Carlo Simulation", type="primary")
-
-# Display samples
-st.subheader("📋 Input Samples")
-col1, col2 = st.columns(2)
-with col1:
-    st.write(f"**Number of samples:** {len(samples)}")
-    st.write(f"**Sample mean:** {np.mean(samples):.2f}")
-    st.write(f"**Sample std:** {np.std(samples):.2f}")
-    st.write(f"**Range:** [{min(samples):.2f}, {max(samples):.2f}]")
-with col2:
-    st.write("**Sample values:**")
-    st.write(samples[:20] if len(samples) > 20 else samples)
-    if len(samples) > 20:
-        st.write(f"... and {len(samples) - 20} more")
-
-if run_button:
-    with st.spinner("Running Monte Carlo simulation..."):
+def print_histogram_text(results, regulatory_limit, width=50):
+    """Print text-based histogram"""
+    
+    print("\n📊 TEXT-BASED HISTOGRAM (Distribution of Simulated Values)")
+    print("-" * 60)
+    
+    # Create bins
+    min_val = results['min']
+    max_val = results['max']
+    bins = np.linspace(min_val, max_val, 20)
+    
+    # Count frequencies
+    hist, bin_edges = np.histogram(results['all_simulations'], bins=bins)
+    
+    # Find max frequency for scaling
+    max_freq = max(hist)
+    scale = width / max_freq
+    
+    for i in range(len(hist)):
+        bar_length = int(hist[i] * scale)
+        bar = '█' * bar_length
         
-        # Run simulation
-        n_samples = len(samples)
-        total_iterations = n_samples * iterations_per_sample
-        
-        all_simulations = []
-        for measured in samples:
-            sigma = measured * (uncertainty_percent / 100)
-            simulated = np.random.normal(loc=measured, scale=sigma, size=iterations_per_sample)
-            all_simulations.extend(simulated)
-        
-        all_simulations = np.array(all_simulations)
-        
-        # Calculate results
-        mean_val = np.mean(all_simulations)
-        median_val = np.median(all_simulations)
-        std_val = np.std(all_simulations)
-        ci_95_lower = np.percentile(all_simulations, 2.5)
-        ci_95_upper = np.percentile(all_simulations, 97.5)
-        p_exceed = np.mean(all_simulations > regulatory_limit)
-        
-        # Display results
-        st.markdown("---")
-        st.subheader("📊 Simulation Results")
-        
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("Mean", f"{mean_val:.2f}")
-        with col2:
-            st.metric("Median", f"{median_val:.2f}")
-        with col3:
-            st.metric("Std Dev", f"{std_val:.2f}")
-        with col4:
-            st.metric("Probability > Limit", f"{p_exceed*100:.1f}%")
-        
-        st.markdown("---")
-        st.subheader("📈 Confidence Intervals")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.info(f"**90% Confidence Interval**\n\n[{np.percentile(all_simulations, 5):.2f}, {np.percentile(all_simulations, 95):.2f}]")
-        with col2:
-            st.success(f"**95% Confidence Interval**\n\n[{ci_95_lower:.2f}, {ci_95_upper:.2f}]")
-        
-        # Regulatory decision
-        st.markdown("---")
-        st.subheader("⚖️ Regulatory Decision")
-        
-        if p_exceed < 0.05:
-            st.success("✅ **SAFE ZONE - Declare Compliant**\n\nNo enforcement action needed.")
-        elif p_exceed > 0.95:
-            st.error("❌ **VIOLATION ZONE - Declare Non-Compliant**\n\nEnforcement action recommended.")
+        # Color code based on bin position relative to limit
+        if bin_edges[i] >= regulatory_limit:
+            prefix = '🔴'
+        elif bin_edges[i+1] <= regulatory_limit:
+            prefix = '🟢'
         else:
-            st.warning("⚠️ **UNCERTAIN ZONE - Need More Data**\n\nCollect additional samples or install CEMS.")
+            prefix = '🟡'
         
-        # Display distribution stats
-        st.markdown("---")
-        st.subheader("📊 Distribution Statistics")
-        
-        stats_data = {
-            "Metric": ["Minimum", "Maximum", "Q1 (25th)", "Q3 (75th)", "2.5th Percentile", "97.5th Percentile"],
-            "Value": [
-                f"{np.min(all_simulations):.2f}",
-                f"{np.max(all_simulations):.2f}",
-                f"{np.percentile(all_simulations, 25):.2f}",
-                f"{np.percentile(all_simulations, 75):.2f}",
-                f"{ci_95_lower:.2f}",
-                f"{ci_95_upper:.2f}"
-            ]
-        }
-        st.dataframe(pd.DataFrame(stats_data), use_container_width=True)
-        
-        # Display sample data for download
-        results_df = pd.DataFrame({
-            'simulated_values': all_simulations
-        })
-        
-        csv = results_df.to_csv(index=False)
-        st.download_button(
-            label="📥 Download Simulated Values (CSV)",
-            data=csv,
-            file_name="monte_carlo_results.csv",
-            mime="text/csv"
-        )
-        
-        st.markdown("---")
-        st.caption(f"Simulation completed with {total_iterations:,} total iterations")
+        print(f"{prefix} {bin_edges[i]:6.1f} - {bin_edges[i+1]:6.1f} | {bar}")
+    
+    print(f"\n🟢 = Below limit | 🟡 = Crosses limit | 🔴 = Above limit")
+    print(f"Limit = {regulatory_limit}")
 
-else:
-    st.info("👈 Click 'Run Monte Carlo Simulation' to start")
+
+def print_cdf_text(results, regulatory_limit):
+    """Print text-based CDF table"""
+    
+    print("\n📈 TEXT-BASED CDF (Cumulative Distribution Function)")
+    print("-" * 60)
+    print(f"{'Value (ppm)':>12} | {'Probability Non-Exceedance':>25}")
+    print("-" * 60)
+    
+    # Calculate percentiles at regular intervals
+    percentiles = [1, 5, 10, 25, 50, 75, 90, 95, 99]
+    for p in percentiles:
+        value = np.percentile(results['all_simulations'], p)
+        print(f"{value:12.2f} | {p:25}%")
+    
+    print("-" * 60)
+    print(f"{regulatory_limit:12.2f} | {results['p_comply']*100:25.1f}% (at limit)")
+    print("-" * 60)
+
+
+def print_sample_analysis(samples):
+    """Print statistical analysis of input samples"""
+    
+    print("\n📋 SAMPLE STATISTICAL ANALYSIS")
+    print("-" * 60)
+    
+    sorted_samples = sorted(samples)
+    n = len(sorted_samples)
+    
+    print(f"Minimum value:     {sorted_samples[0]:.2f}")
+    print(f"Maximum value:     {sorted_samples[-1]:.2f}")
+    print(f"Mean:              {np.mean(sorted_samples):.2f}")
+    print(f"Median:            {np.median(sorted_samples):.2f}")
+    print(f"Standard deviation: {np.std(sorted_samples):.2f}")
+    
+    # Quartiles
+    q1 = np.percentile(sorted_samples, 25)
+    q3 = np.percentile(sorted_samples, 75)
+    print(f"Q1 (25th):         {q1:.2f}")
+    print(f"Q3 (75th):         {q3:.2f}")
+    print(f"IQR:               {q3 - q1:.2f}")
+    
+    # Check for outliers using IQR method
+    iqr = q3 - q1
+    lower_bound = q1 - 1.5 * iqr
+    upper_bound = q3 + 1.5 * iqr
+    outliers = [x for x in samples if x < lower_bound or x > upper_bound]
+    
+    if outliers:
+        print(f"\n⚠️ Potential outliers detected: {outliers}")
+    else:
+        print(f"\n✓ No outliers detected")
+
+
+def run_sample_size_analysis(samples, uncertainty_percent, regulatory_limit, iterations_per_sample):
+    """Analyze how results change with different sample sizes"""
+    
+    print("\n" + "=" * 60)
+    print("SAMPLE SIZE EFFECT ANALYSIS")
+    print("=" * 60)
+    
+    sample_sizes = [10, 20, 30, 50, 100]
+    results_list = []
+    
+    print(f"\n{'Samples':>8} | {'Mean':>10} | {'95% CI Width':>12} | {'P(Exceed)':>10}")
+    print("-" * 50)
+    
+    for size in sample_sizes:
+        if size > len(samples):
+            break
+        
+        sample_subset = samples[:size]
+        sigma_vals = [s * (uncertainty_percent / 100) for s in sample_subset]
+        
+        all_sim = []
+        for j, measured in enumerate(sample_subset):
+            sim = np.random.normal(loc=measured, scale=sigma_vals[j], size=iterations_per_sample)
+            all_sim.extend(sim)
+        
+        all_sim = np.array(all_sim)
+        mean_val = np.mean(all_sim)
+        ci_lower = np.percentile(all_sim, 2.5)
+        ci_upper = np.percentile(all_sim, 97.5)
+        ci_width = ci_upper - ci_lower
+        p_exceed = np.mean(all_sim > regulatory_limit)
+        
+        results_list.append((size, mean_val, ci_width, p_exceed))
+        print(f"{size:8} | {mean_val:10.2f} | {ci_width:12.2f} | {p_exceed*100:10.1f}%")
+    
+    print("\n💡 INTERPRETATION:")
+    print("   As sample size increases, the confidence interval width decreases.")
+    print("   More samples = More precise estimate of true emissions.")
+
+
+def export_to_csv(results, filename="monte_carlo_results.csv"):
+    """Export results to CSV file"""
+    import csv
+    
+    try:
+        with open(filename, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['Metric', 'Value'])
+            writer.writerow(['Number of Samples', results['n_samples']])
+            writer.writerow(['Sample Mean', results['sample_mean']])
+            writer.writerow(['Sample Std Dev', results['sample_std']])
+            writer.writerow(['Simulation Mean', results['mean']])
+            writer.writerow(['Simulation Median', results['median']])
+            writer.writerow(['Simulation Std Dev', results['std']])
+            writer.writerow(['95% CI Lower', results['percentile_2.5']])
+            writer.writerow(['95% CI Upper', results['percentile_97.5']])
+            writer.writerow(['Probability of Exceedance', results['p_exceed']])
+            writer.writerow(['Probability of Compliance', results['p_comply']])
+            writer.writerow(['Regulatory Limit', regulatory_limit])
+        
+        print(f"\n✅ Results exported to {filename}")
+    except Exception as e:
+        print(f"\n⚠️ Could not export to CSV: {e}")
+
+
+# ================================================================
+# MAIN EXECUTION
+# ================================================================
+
+if __name__ == "__main__":
+    
+    # Run Monte Carlo simulation
+    results = run_monte_carlo(samples, uncertainty_percent, regulatory_limit, iterations_per_sample)
+    
+    # Print results
+    print_results(results, regulatory_limit)
+    
+    # Print sample analysis
+    print_sample_analysis(samples)
+    
+    # Print text-based histogram
+    print_histogram_text(results, regulatory_limit)
+    
+    # Print text-based CDF
+    print_cdf_text(results, regulatory_limit)
+    
+    # Run sample size analysis if enough samples
+    if len(samples) >= 30:
+        run_sample_size_analysis(samples, uncertainty_percent, regulatory_limit, 1000)
+    
+    # Export to CSV
+    export_to_csv(results)
+    
+    print("\n" + "=" * 60)
+    print("SIMULATION COMPLETE")
+    print("=" * 60)
