@@ -1,81 +1,159 @@
-"""
-QUICK RUN SCRIPT - Minimal version for fast execution
-"""
-
+# streamlit_app.py
+import streamlit as st
 import numpy as np
-import matplotlib.pyplot as plt
+import pandas as pd
 
-# ================================================================
-# INPUT YOUR DATA HERE
-# ================================================================
+st.set_page_config(page_title="Monte Carlo Simulation", layout="wide")
 
-# Enter your measured samples (at least 10)
-samples = [95, 102, 88, 110, 97, 105, 92, 108, 99, 101]
+st.title("🎲 Monte Carlo Simulation for Emission Prediction")
+st.markdown("---")
 
-# Measurement uncertainty (%)
-uncertainty_percent = 5
+# Sidebar for inputs
+st.sidebar.header("📊 Input Parameters")
 
-# Regulatory limit
-regulatory_limit = 100
+# Sample input method
+input_method = st.sidebar.radio(
+    "How would you like to enter samples?",
+    ["Manual Entry", "Upload CSV", "Use Example Data"]
+)
 
-# Number of iterations per sample
-iterations_per_sample = 10000
+samples = []
 
-# ================================================================
-# RUN SIMULATION
-# ================================================================
+if input_method == "Manual Entry":
+    n_samples = st.sidebar.number_input("Number of samples", min_value=5, max_value=100, value=10)
+    st.sidebar.write("Enter measured values:")
+    for i in range(int(n_samples)):
+        val = st.sidebar.number_input(f"Sample {i+1}", value=95.0 + i, step=1.0)
+        samples.append(val)
 
-n_samples = len(samples)
-total_iterations = n_samples * iterations_per_sample
+elif input_method == "Upload CSV":
+    uploaded_file = st.sidebar.file_uploader("Upload CSV file", type=['csv'])
+    if uploaded_file is not None:
+        df = pd.read_csv(uploaded_file)
+        if 'measured_value' in df.columns:
+            samples = df['measured_value'].tolist()
+        else:
+            samples = df.iloc[:, 0].tolist()
+        st.sidebar.success(f"Loaded {len(samples)} samples")
+    else:
+        samples = [95, 102, 88, 110, 97, 105, 92, 108, 99, 101]
 
-print(f"\nRunning Monte Carlo with {n_samples} samples...")
-print(f"Total iterations: {total_iterations:,}")
-
-# Run simulation
-all_simulations = []
-for measured in samples:
-    sigma = measured * (uncertainty_percent / 100)
-    simulated = np.random.normal(loc=measured, scale=sigma, size=iterations_per_sample)
-    all_simulations.extend(simulated)
-
-all_simulations = np.array(all_simulations)
-
-# Calculate results
-mean_val = np.mean(all_simulations)
-median_val = np.median(all_simulations)
-std_val = np.std(all_simulations)
-ci_95_lower = np.percentile(all_simulations, 2.5)
-ci_95_upper = np.percentile(all_simulations, 97.5)
-p_exceed = np.mean(all_simulations > regulatory_limit)
-
-# Print results
-print("\n" + "=" * 50)
-print("RESULTS")
-print("=" * 50)
-print(f"Mean:                    {mean_val:.2f}")
-print(f"Median:                  {median_val:.2f}")
-print(f"Standard Deviation:      {std_val:.2f}")
-print(f"95% Confidence Interval: [{ci_95_lower:.2f}, {ci_95_upper:.2f}]")
-print(f"Probability > {regulatory_limit}: {p_exceed*100:.1f}%")
-
-# Regulatory decision
-if p_exceed < 0.05:
-    print("\nDECISION: SAFE ZONE - Declare Compliant")
-elif p_exceed > 0.95:
-    print("\nDECISION: VIOLATION ZONE - Declare Non-Compliant")
 else:
-    print("\nDECISION: UNCERTAIN ZONE - Need More Data")
+    # Example data
+    samples = [95, 102, 88, 110, 97, 105, 92, 108, 99, 101]
+    st.sidebar.info("Using example data (10 samples from a refinery)")
 
-# Quick plot
-plt.figure(figsize=(10, 6))
-plt.hist(all_simulations, bins=50, alpha=0.7, color='steelblue', edgecolor='black')
-plt.axvline(x=regulatory_limit, color='red', linestyle='--', linewidth=2, label=f'Limit = {regulatory_limit}')
-plt.axvline(x=mean_val, color='blue', linestyle='-', linewidth=2, label=f'Mean = {mean_val:.1f}')
-plt.xlabel('Emission Value')
-plt.ylabel('Frequency')
-plt.title('Monte Carlo Simulation Results')
-plt.legend()
-plt.grid(True, alpha=0.3)
-plt.show()
+# Parameters
+uncertainty_percent = st.sidebar.slider("Measurement Uncertainty (%)", 1, 20, 5)
+regulatory_limit = st.sidebar.number_input("Regulatory Limit", value=100.0)
+iterations_per_sample = st.sidebar.selectbox("Iterations per sample", [1000, 5000, 10000, 50000], index=2)
 
-print("\nSimulation complete!")
+# Run button
+run_button = st.sidebar.button("🚀 Run Monte Carlo Simulation", type="primary")
+
+# Display samples
+st.subheader("📋 Input Samples")
+col1, col2 = st.columns(2)
+with col1:
+    st.write(f"**Number of samples:** {len(samples)}")
+    st.write(f"**Sample mean:** {np.mean(samples):.2f}")
+    st.write(f"**Sample std:** {np.std(samples):.2f}")
+    st.write(f"**Range:** [{min(samples):.2f}, {max(samples):.2f}]")
+with col2:
+    st.write("**Sample values:**")
+    st.write(samples[:20] if len(samples) > 20 else samples)
+    if len(samples) > 20:
+        st.write(f"... and {len(samples) - 20} more")
+
+if run_button:
+    with st.spinner("Running Monte Carlo simulation..."):
+        
+        # Run simulation
+        n_samples = len(samples)
+        total_iterations = n_samples * iterations_per_sample
+        
+        all_simulations = []
+        for measured in samples:
+            sigma = measured * (uncertainty_percent / 100)
+            simulated = np.random.normal(loc=measured, scale=sigma, size=iterations_per_sample)
+            all_simulations.extend(simulated)
+        
+        all_simulations = np.array(all_simulations)
+        
+        # Calculate results
+        mean_val = np.mean(all_simulations)
+        median_val = np.median(all_simulations)
+        std_val = np.std(all_simulations)
+        ci_95_lower = np.percentile(all_simulations, 2.5)
+        ci_95_upper = np.percentile(all_simulations, 97.5)
+        p_exceed = np.mean(all_simulations > regulatory_limit)
+        
+        # Display results
+        st.markdown("---")
+        st.subheader("📊 Simulation Results")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Mean", f"{mean_val:.2f}")
+        with col2:
+            st.metric("Median", f"{median_val:.2f}")
+        with col3:
+            st.metric("Std Dev", f"{std_val:.2f}")
+        with col4:
+            st.metric("Probability > Limit", f"{p_exceed*100:.1f}%")
+        
+        st.markdown("---")
+        st.subheader("📈 Confidence Intervals")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.info(f"**90% Confidence Interval**\n\n[{np.percentile(all_simulations, 5):.2f}, {np.percentile(all_simulations, 95):.2f}]")
+        with col2:
+            st.success(f"**95% Confidence Interval**\n\n[{ci_95_lower:.2f}, {ci_95_upper:.2f}]")
+        
+        # Regulatory decision
+        st.markdown("---")
+        st.subheader("⚖️ Regulatory Decision")
+        
+        if p_exceed < 0.05:
+            st.success("✅ **SAFE ZONE - Declare Compliant**\n\nNo enforcement action needed.")
+        elif p_exceed > 0.95:
+            st.error("❌ **VIOLATION ZONE - Declare Non-Compliant**\n\nEnforcement action recommended.")
+        else:
+            st.warning("⚠️ **UNCERTAIN ZONE - Need More Data**\n\nCollect additional samples or install CEMS.")
+        
+        # Display distribution stats
+        st.markdown("---")
+        st.subheader("📊 Distribution Statistics")
+        
+        stats_data = {
+            "Metric": ["Minimum", "Maximum", "Q1 (25th)", "Q3 (75th)", "2.5th Percentile", "97.5th Percentile"],
+            "Value": [
+                f"{np.min(all_simulations):.2f}",
+                f"{np.max(all_simulations):.2f}",
+                f"{np.percentile(all_simulations, 25):.2f}",
+                f"{np.percentile(all_simulations, 75):.2f}",
+                f"{ci_95_lower:.2f}",
+                f"{ci_95_upper:.2f}"
+            ]
+        }
+        st.dataframe(pd.DataFrame(stats_data), use_container_width=True)
+        
+        # Display sample data for download
+        results_df = pd.DataFrame({
+            'simulated_values': all_simulations
+        })
+        
+        csv = results_df.to_csv(index=False)
+        st.download_button(
+            label="📥 Download Simulated Values (CSV)",
+            data=csv,
+            file_name="monte_carlo_results.csv",
+            mime="text/csv"
+        )
+        
+        st.markdown("---")
+        st.caption(f"Simulation completed with {total_iterations:,} total iterations")
+
+else:
+    st.info("👈 Click 'Run Monte Carlo Simulation' to start")
